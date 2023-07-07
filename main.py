@@ -132,6 +132,36 @@ class DDOS(threading.Thread):
         self.attack()
         print("Exiting " + self.name)
 
+
+class MSSPDecryptor:
+    def __init__(self, ciphertext, n, m, d):
+        self.ciphertext = ciphertext
+        self.n = n
+        self.m = m
+        self.d = d
+
+    def decrypt(self):
+        # Split the ciphertext into n sets
+        sets = [self.ciphertext[i:i + self.d * self.m] for i in range(0, len(self.ciphertext), self.d * self.m)]
+
+        # Check that we have the correct number of sets
+        if len(sets) != self.n:
+            raise ValueError("Ciphertext cannot be evenly divided into n sets of m items of d digits")
+
+        # Split each set into m items of d digits
+        sets = [[set[i:i + self.d] for i in range(0, len(set), self.d)] for set in sets]
+
+        # Convert each item to an integer and sum them
+        sums = [sum(int(item) for item in set) for set in sets]
+
+        # Check that all sums are equal
+        if len(set(sums)) != 1:
+            raise ValueError("Not all sets sum to the same value")
+
+        # Return the sum
+        return sums[0]
+
+
 if __name__ == '__main__':
     print("Welcome to the main program")
     while(True):
@@ -142,7 +172,8 @@ if __name__ == '__main__':
         print("4. Decrypt a string")
         print("5. Decrypt a string with Vigenere Cipher")
         print("6. DDOS")
-        print("7. Exit")
+        print("7. MSSP Decryptor")
+        print("8. Exit")
         option = int(input("Please enter your option: "))
         if option == 1:
             print("Please select a language:")
@@ -204,6 +235,13 @@ if __name__ == '__main__':
             for thread in threads:
                 thread.join()
         elif option == 7:
+            ciphertext = input("Please enter a ciphertext: ")
+            n = int(input("Please enter n: "))
+            m = int(input("Please enter m: "))
+            d = int(input("Please enter d: "))
+            msspDecryptor = MSSPDecryptor(ciphertext, n, m, d)
+            print(msspDecryptor.decrypt())
+        elif option == 8:
             exit(0)
         else:
             print("Invalid input")
