@@ -134,13 +134,21 @@ class DDOS(threading.Thread):
 
 
 class MSSPDecryptor:
-    def __init__(self, ciphertext, n, m, d):
-        self.ciphertext = ciphertext
+    def __init__(self, ciphertext, n=None, m=None, d=None):
+        self.ciphertext = ''.join(char for char in ciphertext if char.isdigit())
         self.n = n
         self.m = m
         self.d = d
 
     def decrypt(self):
+        # Calculate the missing parameter
+        if self.n is None:
+            self.n = len(self.ciphertext) // (self.m * self.d)
+        elif self.m is None:
+            self.m = len(self.ciphertext) // (self.n * self.d)
+        else:  # self.d is None
+            self.d = len(self.ciphertext) // (self.n * self.m)
+
         # Split the ciphertext into n sets
         sets = [self.ciphertext[i:i + self.d * self.m] for i in range(0, len(self.ciphertext), self.d * self.m)]
 
@@ -149,17 +157,32 @@ class MSSPDecryptor:
             raise ValueError("Ciphertext cannot be evenly divided into n sets of m items of d digits")
 
         # Split each set into m items of d digits
-        sets = [[set[i:i + self.d] for i in range(0, len(set), self.d)] for set in sets]
+        sets = [[int(set[i:i + self.d]) for i in range(0, len(set), self.d)] for set in sets]
 
-        # Convert each item to an integer and sum them
-        sums = [sum(int(item) for item in set) for set in sets]
+        # Find a common sum in all sets
+        common_sum = self.find_common_sum(sets)
 
-        # Check that all sums are equal
-        if len(set(sums)) != 1:
-            raise ValueError("Not all sets sum to the same value")
+        # Return the common sum
+        return common_sum
 
-        # Return the sum
-        return sums[0]
+    def find_common_sum(self, sets):
+        # Try all possible sums from the sum of the first set down to 0
+        for target_sum in range(sum(sets[0]), -1, -1):
+            # Check if this sum can be made by a subset of each set
+            if all(self.calcSubsetSum(set, target_sum) for set in sets):
+                # If it can, return this sum
+                return target_sum
+        # If no common sum is found, raise an error
+        raise ValueError("No common sum found in all sets")
+
+    def calcSubsetSum(self, nums, sum):
+        if sum == 0:
+            return True
+        if not nums:
+            return False
+        return self.calcSubsetSum(nums[1:], sum - nums[0]) or self.calcSubsetSum(nums[1:], sum)
+
+
 
 
 if __name__ == '__main__':
@@ -236,11 +259,19 @@ if __name__ == '__main__':
                 thread.join()
         elif option == 7:
             ciphertext = input("Please enter a ciphertext: ")
-            n = int(input("Please enter n: "))
-            m = int(input("Please enter m: "))
-            d = int(input("Please enter d: "))
+
+            n_input = input("Please enter n: ")
+            n = int(n_input) if n_input else None
+
+            m_input = input("Please enter m: ")
+            m = int(m_input) if m_input else None
+
+            d_input = input("Please enter d: ")
+            d = int(d_input) if d_input else None
+
             msspDecryptor = MSSPDecryptor(ciphertext, n, m, d)
             print(msspDecryptor.decrypt())
+
         elif option == 8:
             exit(0)
         else:
